@@ -60,47 +60,37 @@ class GenerateRequest(BaseModel):
 async def home():
     if os.path.exists("index.html"):
         return FileResponse("index.html")
-    return {"message": "EraCam Studio Backend Active. index.html not found."}
+    return {"message": "EraCam Studio Backend Active"}
 
 @app.get("/api/health")
 async def health_check():
-    return {
-        "status": "online",
-        "service": "EraCam AI Backend",
-        "fal_connected": bool(FAL_KEY)
-    }
+    return {"status": "online", "service": "EraCam AI Backend"}
 
 @app.post("/api/generate")
 async def generate_era_portrait(req: GenerateRequest):
     if not req.image_base64:
-        raise HTTPException(status_code=400, detail="image_base64 is required")
+        raise HTTPException(status_code=400, detail="Please upload a photo first.")
 
     era_info = ERA_PROMPTS.get(req.era, ERA_PROMPTS["1950s"])
+    reference_image = req.image_base64
 
+    # Robust image normalization: try PIL optimization, fallback to raw data URI
     try:
-        raw_b64 = req.image_base64
-        if "," in raw_b64:
-            raw_b64 = raw_b64.split(",")[1]
-        
+        raw_b64 = reference_image.split(",")[1] if "," in reference_image else reference_image
         img_bytes = base64.b64decode(raw_b64)
         im = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-        
         max_dim = 768
         w, h = im.size
         if w > max_dim or h > max_dim:
-            if w > h:
-                h = int(h * max_dim / w)
-                w = max_dim
-            else:
-                w = int(w * max_dim / h)
-                h = max_dim
-            im = im.resize((w, h), Image.Resampling.LANCZOS)
-            
+            scale = max_dim / max(w, h)
+            im = im.resize((int(w * scale), int(h * scale)), Image.Resampling.LANCZOS)
         buf = io.BytesIO()
         im.save(buf, format="JPEG", quality=85)
-        clean_data_uri = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode("utf-8")
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid image format: {str(e)}")
+        reference_image = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode("utf-8")
+    except Exception:
+        # If PIL fails on custom mobile phone formats (e.g. HEIC), format directly as data URI
+        if not reference_image.startswith("data:"):
+            reference_image = f"data:image/jpeg;base64,{reference_image}"
 
     headers = {
         "Authorization": f"Key {FAL_KEY}",
@@ -109,7 +99,7 @@ async def generate_era_portrait(req: GenerateRequest):
     
     payload = {
         "prompt": era_info["prompt"],
-        "reference_image": clean_data_uri,
+        "reference_image": reference_image,
         "id_weight": 1.0,
         "guidance_scale": 4.0
     }
@@ -118,7 +108,7 @@ async def generate_era_portrait(req: GenerateRequest):
         try:
             response = await client.post(FAL_MODEL_ENDPOINT, headers=headers, json=payload)
             if response.status_code != 200:
-                raise HTTPException(status_code=response.status_code, detail=f"fal.ai API error: {response.text}")
+                raise HTTPException(status_code=response.status_code, detail=f"AI Engine error: {response.text}")
             
             data = response.json()
             image_url = ""

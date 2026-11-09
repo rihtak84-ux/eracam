@@ -490,21 +490,43 @@
       const file = e.target.files[0];
       if (!file) return;
 
-      showToast("Reading photo...");
+      showToast("Processing photo...");
       const reader = new FileReader();
       reader.onload = (ev) => {
-        userBase64 = ev.target.result;
-        generatedCache = {}; // Reset cache for new photo
+        const rawUrl = ev.target.result;
+        const img = new Image();
+        img.onload = () => {
+          // Normalize to standard JPEG via HTML5 Canvas (guarantees zero format errors across all phones)
+          const canvas = document.createElement("canvas");
+          let w = img.width;
+          let h = img.height;
+          const maxDim = 800;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+            else { w = Math.round((w * maxDim) / h); h = maxDim; }
+          }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, w, h);
+          userBase64 = canvas.toDataURL("image/jpeg", 0.85);
 
-        loadedFileName.textContent = file.name;
-        uploadStatusBox.style.display = "flex";
-        btnUpload.style.display = "none";
-        photoStatusBadge.textContent = "Photo Active";
-        photoStatusBadge.style.color = "#34d399";
+          generatedCache = {}; // Reset cache for new photo
+          loadedFileName.textContent = file.name;
+          uploadStatusBox.style.display = "flex";
+          btnUpload.style.display = "none";
+          photoStatusBadge.textContent = "Photo Active";
+          photoStatusBadge.style.color = "#34d399";
 
-        splitOverlayImg.src = userBase64;
-        showToast("✓ Photo loaded! Starting AI generation...");
-        generatePortrait(currentEra);
+          splitOverlayImg.src = userBase64;
+          showToast("✓ Photo ready! Generating portrait...");
+          generatePortrait(currentEra);
+        };
+        img.onerror = () => {
+          userBase64 = rawUrl;
+          generatePortrait(currentEra);
+        };
+        img.src = rawUrl;
       };
       reader.readAsDataURL(file);
     });
