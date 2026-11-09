@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>EraCam Studio - Live Generative AI</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background-color: #030712;
+      color: #f3f4f6;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+    header {
+      background-color: rgba(17, 24, 39, 0.95);
+      border-bottom: 1px solid #1f2937;
+      padding: 12px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+    .header-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #d97706, #f59e0b);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .brand-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge-live {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      font-weight: 600;
+    }
+    main {
+      flex: 1;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .card {
+      background-color: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #9ca3af;
+    }
+    .btn-upload-big {
+      width: 100%;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #030712;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);
+      transition: all 0.15s ease;
+    }
+    .btn-upload-big:active {
+      transform: scale(0.98);
+    }
+    .upload-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+    .era-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    @media (min-width: 640px) {
+      .era-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    .era-btn {
+      background-color: #0b0f19;
+      border: 1px solid #1f2937;
+      color: #d1d5db;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 68px;
+      transition: all 0.15s ease;
+    }
+    .era-btn:hover {
+      border-color: #374151;
+      background-color: #131b2e;
+    }
+    .era-btn.active {
+      background-color: rgba(245, 158, 11, 0.15);
+      border-color: #f59e0b;
+      color: #ffffff;
+      box-shadow: 0 0 0 1px #f59e0b;
+    }
+    .era-year {
+      font-size: 10px;
+      font-family: monospace;
+      color: #fbbf24;
+    }
+    .era-name {
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 3px;
+    }
+    .preview-box {
+      background-color: #030712;
+      border: 1px solid #1f2937;
+      border-radius: 14px;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 380px;
+      position: relative;
+      overflow: hidden;
+    }
+    .display-media {
+      max-width: 100%;
+      max-height: 520px;
+      border-radius: 8px;
+      display: block;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+      object-fit: contain;
+    }
+    .placeholder-view {
+      text-align: center;
+      color: #6b7280;
+      padding: 40px 20px;
+    }
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(3, 7, 18, 0.92);
+      backdrop-filter: blur(6px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      z-index: 30;
+      display: none;
+      padding: 24px;
+      text-align: center;
+    }
+    .spinner {
+      width: 52px;
+      height: 52px;
+      border: 4px solid rgba(245, 158, 11, 0.2);
+      border-top-color: #f59e0b;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .split-overlay {
+      position: absolute;
+      top: 8px;
+      bottom: 8px;
+      left: 8px;
+      overflow: hidden;
+      border-right: 2px solid #f59e0b;
+      pointer-events: none;
+      display: none;
+      border-top-left-radius: 8px;
+      border-bottom-left-radius: 8px;
+    }
+    .split-overlay-img {
+      height: 100%;
+      max-height: 520px;
+      object-fit: contain;
+    }
+    .compare-bar {
+      width: 100%;
+      max-width: 480px;
+      margin: 14px auto 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      color: #9ca3af;
+    }
+    input[type=range] {
+      flex: 1;
+      accent-color: #f59e0b;
+      cursor: pointer;
+    }
+    .btn-hold {
+      margin-top: 8px;
+      background-color: #1f2937;
+      color: #e5e7eb;
+      border: 1px solid #374151;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      user-select: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-hold:active {
+      background-color: #374151;
+    }
+    .btn-save {
+      width: 100%;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 13px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+      margin-top: 14px;
+      transition: all 0.15s ease;
+    }
+    .btn-save:active {
+      transform: scale(0.98);
+    }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #f59e0b;
+      color: #030712;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.25s ease;
+      z-index: 50;
+      pointer-events: none;
+    }
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-icon">✨</div>
+        <div>
+          <div class="brand-title">EraCam Studio</div>
+          <div style="font-size: 10px; color: #9ca3af;">Live AI Face-Preserving Engine</div>
+        </div>
+      </div>
+      <div>
+        <span class="badge-live">● Dedicated GPU Backend</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main>
+
+    <!-- SECTION 1: UPLOAD PHOTO -->
+    <div class="card">
+      <div class="section-header">
+        <span class="section-title">1. Upload Any Photo / Selfie</span>
+        <span id="photoStatusBadge" style="font-size: 10px; color: #fbbf24;">Waiting for upload</span>
+      </div>
+
+      <button type="button" class="btn-upload-big" id="btnUpload">
+        <span>📸 Upload Your Photo / Selfie</span>
+      </button>
+      <input type="file" id="fileInput" accept="image/*" style="display: none;">
+
+      <div id="uploadStatusBox" class="upload-status" style="display: none;">
+        <div style="display: flex; align-items: center; gap: 8px; color: #34d399; font-weight: 600;">
+          <span>✓ Loaded:</span>
+          <span id="loadedFileName" style="color: #9ca3af; font-family: monospace;"></span>
+        </div>
+        <button id="btnClearPhoto" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239,68,68,0.3); color: #f87171; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer;">
+          Change Photo
+        </button>
+      </div>
+    </div>
+
+    <!-- SECTION 2: ERA SELECTOR -->
+    <div class="card">
+      <div class="section-header">
+        <span class="section-title">2. Select Historical Era</span>
+        <span id="activeEraBadge" style="font-size: 10px; color: #fbbf24;">1950s Mid-Century Kodachrome</span>
+      </div>
+
+      <div class="era-grid" id="eraButtons">
+        <button class="era-btn active" data-era="1950s">
+          <span class="era-year">1950–1962</span>
+          <span class="era-name">1950s Kodachrome</span>
+        </button>
+        <button class="era-btn" data-era="1920s">
+          <span class="era-year">1920–1929</span>
+          <span class="era-name">1920s Great Gatsby</span>
+        </button>
+        <button class="era-btn" data-era="1870s">
+          <span class="era-year">1870–1885</span>
+          <span class="era-name">1870s Victorian Tintype</span>
+        </button>
+        <button class="era-btn" data-era="1970s">
+          <span class="era-year">1970–1979</span>
+          <span class="era-name">1970s Retro Polaroid</span>
+        </button>
+        <button class="era-btn" data-era="1980s">
+          <span class="era-year">1980–1989</span>
+          <span class="era-name">1980s Neon Rock</span>
+        </button>
+        <button class="era-btn" data-era="1990s">
+          <span class="era-year">1990–1999</span>
+          <span class="era-name">1990s Kodak Gold</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- SECTION 3: DISPLAY & LIVE RESULTS -->
+    <div class="card">
+      <div class="preview-box" id="previewContainer">
+        <!-- Placeholder View -->
+        <div id="placeholderView" class="placeholder-view">
+          <div style="font-size: 40px; margin-bottom: 10px;">📸</div>
+          <div style="font-size: 14px; font-weight: 600; color: #e5e7eb;">No Photo Uploaded Yet</div>
+          <div style="font-size: 12px; margin-top: 4px;">Tap the button above to upload a selfie or portrait</div>
+        </div>
+
+        <!-- Generated Result Image -->
+        <img id="resultImg" class="display-media" style="display: none;" alt="Historical Portrait">
+
+        <!-- Loading Overlay with Timer -->
+        <div id="loadingOverlay" class="loading-overlay">
+          <div class="spinner"></div>
+          <div style="font-weight: 700; color: #fbbf24; font-size: 15px;" id="loadingTitle">
+            Generating 1950s Kodachrome Portrait...
+          </div>
+          <div style="font-size: 12px; color: #9ca3af;">
+            Preserving facial identity • Redrawing period wardrobe, hair & background
+          </div>
+          <div style="font-size: 11px; font-family: monospace; color: #34d399; margin-top: 4px;" id="loadingTimer">
+            Elapsed: 0s
+          </div>
+        </div>
+
+        <!-- Split View Overlay -->
+        <div id="splitOverlay" class="split-overlay">
+          <img id="splitOverlayImg" class="split-overlay-img" alt="Original Photo">
+        </div>
+      </div>
+
+      <!-- Split Slider -->
+      <div class="compare-bar" id="compareControls" style="display: none;">
+        <span>SPLIT VIEW:</span>
+        <input type="range" id="splitRange" min="0" max="100" value="0">
+        <span id="splitValue" style="color: #fbbf24; font-family: monospace; width: 35px; text-align: right;">Off</span>
+      </div>
+
+      <!-- Hold to View Original -->
+      <div style="text-align: center; margin-top: 8px;" id="holdControls" style="display: none;">
+        <button id="btnHold" class="btn-hold">
+          👁️ Hold to View Original Photo
+        </button>
+      </div>
+
+      <!-- Download Button -->
+      <button id="btnDownload" class="btn-save" style="display: none;">
+        💾 Download High-Resolution Historical Photograph
+      </button>
+    </div>
+
+  </main>
+
+  <div id="toast" class="toast">Action complete!</div>
+
+  <script>
+    let currentEra = "1950s";
+    let userBase64 = "";
+    let generatedCache = {}; // Cache results by era: { "1950s": "https://..." }
+    let timerInterval = null;
+
+    const btnUpload = document.getElementById("btnUpload");
+    const fileInput = document.getElementById("fileInput");
+    const uploadStatusBox = document.getElementById("uploadStatusBox");
+    const loadedFileName = document.getElementById("loadedFileName");
+    const btnClearPhoto = document.getElementById("btnClearPhoto");
+    const photoStatusBadge = document.getElementById("photoStatusBadge");
+    const placeholderView = document.getElementById("placeholderView");
+    const resultImg = document.getElementById("resultImg");
+    const splitOverlay = document.getElementById("splitOverlay");
+    const splitOverlayImg = document.getElementById("splitOverlayImg");
+    const compareControls = document.getElementById("compareControls");
+    const holdControls = document.getElementById("holdControls");
+    const btnDownload = document.getElementById("btnDownload");
+    const loadingOverlay = document.getElementById("loadingOverlay");
+    const loadingTitle = document.getElementById("loadingTitle");
+    const loadingTimer = document.getElementById("loadingTimer");
+    const toast = document.getElementById("toast");
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2500);
+    }
+
+    btnUpload.addEventListener("click", () => fileInput.click());
+
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      showToast("Reading photo...");
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        userBase64 = ev.target.result;
+        generatedCache = {}; // Reset cache for new photo
+
+        loadedFileName.textContent = file.name;
+        uploadStatusBox.style.display = "flex";
+        btnUpload.style.display = "none";
+        photoStatusBadge.textContent = "Photo Active";
+        photoStatusBadge.style.color = "#34d399";
+
+        splitOverlayImg.src = userBase64;
+        showToast("✓ Photo loaded! Starting AI generation...");
+        generatePortrait(currentEra);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    btnClearPhoto.addEventListener("click", () => {
+      fileInput.value = "";
+      userBase64 = "";
+      generatedCache = {};
+      uploadStatusBox.style.display = "none";
+      btnUpload.style.display = "flex";
+      photoStatusBadge.textContent = "Waiting for upload";
+      photoStatusBadge.style.color = "#fbbf24";
+
+      resultImg.style.display = "none";
+      placeholderView.style.display = "block";
+      compareControls.style.display = "none";
+      holdControls.style.display = "none";
+      btnDownload.style.display = "none";
+      splitOverlay.style.display = "none";
+    });
+
+    // Era Buttons
+    document.querySelectorAll(".era-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const era = btn.getAttribute("data-era");
+        selectEra(era);
+      });
+    });
+
+    function selectEra(era) {
+      currentEra = era;
+      document.querySelectorAll(".era-btn").forEach(b => {
+        if (b.getAttribute("data-era") === era) b.classList.add("active");
+        else b.classList.remove("active");
+      });
+
+      const eraTitle = document.querySelector(`.era-btn[data-era="${era}"] .era-name`).textContent;
+      document.getElementById("activeEraBadge").textContent = eraTitle;
+
+      if (!userBase64) {
+        showToast("Please upload a photo first!");
+        return;
+      }
+
+      if (generatedCache[era]) {
+        displayResult(generatedCache[era]);
+        showToast(`Loaded ${eraTitle}`);
+      } else {
+        generatePortrait(era);
+      }
+    }
+
+    // Call Backend API
+    async function generatePortrait(era) {
+      if (!userBase64) return;
+
+      const eraTitle = document.querySelector(`.era-btn[data-era="${era}"] .era-name`).textContent;
+      loadingTitle.textContent = `Generating ${eraTitle}...`;
+      loadingOverlay.style.display = "flex";
+
+      let seconds = 0;
+      loadingTimer.textContent = "Elapsed: 0s";
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        seconds++;
+        loadingTimer.textContent = `Elapsed: ${seconds}s (approx 4-6s total)`;
+      }, 1000);
+
+      try {
+        const res = await fetch("/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            image_base64: userBase64,
+            era: era
+          })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || `Server returned ${res.status}`);
+        }
+
+        const data = await res.json();
+        if (data.image_url) {
+          generatedCache[era] = data.image_url;
+          displayResult(data.image_url);
+          showToast(`✨ Generated ${eraTitle} successfully!`);
+        } else {
+          throw new Error("No image returned from server");
+        }
+      } catch (err) {
+        console.error("Generation error:", err);
+        showToast("Error: " + err.message);
+      } finally {
+        clearInterval(timerInterval);
+        loadingOverlay.style.display = "none";
+      }
+    }
+
+    function displayResult(imgUrl) {
+      placeholderView.style.display = "none";
+      resultImg.style.display = "block";
+      resultImg.src = imgUrl;
+
+      compareControls.style.display = "flex";
+      holdControls.style.display = "block";
+      btnDownload.style.display = "flex";
+    }
+
+    // Split Slider
+    const splitRange = document.getElementById("splitRange");
+    const splitValue = document.getElementById("splitValue");
+    splitRange.addEventListener("input", (e) => {
+      const v = parseInt(e.target.value);
+      splitValue.textContent = v > 0 ? `${v}%` : "Off";
+      if (v > 0) {
+        splitOverlay.style.display = "block";
+        splitOverlay.style.width = `${v}%`;
+      } else {
+        splitOverlay.style.display = "none";
+      }
+    });
+
+    // Hold Original
+    let tempHolding = false;
+    let tempHoldingSrc = "";
+    const btnHold = document.getElementById("btnHold");
+    btnHold.addEventListener("mousedown", () => {
+      tempHolding = true;
+      tempHoldingSrc = resultImg.src;
+      resultImg.src = splitOverlayImg.src;
+    });
+    window.addEventListener("mouseup", () => {
+      if (tempHolding) {
+        tempHolding = false;
+        resultImg.src = tempHoldingSrc;
+      }
+    });
+    btnHold.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      tempHolding = true;
+      tempHoldingSrc = resultImg.src;
+      resultImg.src = splitOverlayImg.src;
+    });
+    window.addEventListener("touchend", () => {
+      if (tempHolding) {
+        tempHolding = false;
+        resultImg.src = tempHoldingSrc;
+      }
+    });
+
+    // Download
+    btnDownload.addEventListener("click", () => {
+      const a = document.createElement("a");
+      a.href = resultImg.src;
+      a.download = `eracam_${currentEra}_${Date.now()}.jpg`;
+      a.target = "_blank";
+      a.click();
+      showToast("✓ Photograph opened / downloaded!");
+    });
+  </script>
+</body>
+</html>

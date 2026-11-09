@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: eracam
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: FAL_KEY
+        value: fal_sk_2320b9ce87bb449ba31f8986aa139bde:d42ebb50f3e3c234223fd0bffb99a383
